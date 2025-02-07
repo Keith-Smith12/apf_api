@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('id_categoria')->constrained('categorias');
             $table->foreignId('id_subcategoria')->nullable()->constrained('sub_categorias');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

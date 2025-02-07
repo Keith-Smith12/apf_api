@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('data_prazo');
             $table->foreignId('id_users')->constrained('users')->onDelete('cascade');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

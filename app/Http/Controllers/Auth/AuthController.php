@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Categoria;
+use App\Models\SubCategoria;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -13,11 +16,12 @@ class AuthController extends Controller
 {
     // Registrar um novo Usuário
 
-    public function Register(Request $request){
-
-        //dd($request);
+    public function register(Request $request)
+    {
+      //  dd($request->all());
+        DB::beginTransaction();
         try {
-            //Validação de Dados
+            // Validar entrada
             $request->validate([
                 'name' => 'required|string|max:255',
                 'sobrenome' => 'required|string|max:255',
@@ -25,17 +29,22 @@ class AuthController extends Controller
                 'password' => 'required|string|min:8|confirmed'
             ]);
 
-            $user = User::Create([
+            // Criar usuário
+            $user = User::create([
                 'name' => $request->name,
                 'sobrenome' => $request->sobrenome,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'nivel' => 1 // Definindo nível padrão como 1 (usuário normal)
+                'nivel' => 1
             ]);
 
-            //Criar Tokens
+            // Criar categorias padrão
+            $this->createDefaultCategories($user);
 
+            // Criar token de autenticação
             $token = $user->createToken('auth_token')->plainTextToken;
+
+            DB::commit();
 
             return response()->json([
                 'status' => true,
@@ -44,13 +53,53 @@ class AuthController extends Controller
                 'token' => $token
             ], 201);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => false,
-                'message' => 'Erro ao criar usuário',
-                'error' => $e->getMessage()
+                'message' => 'Erro ao criar usuário: ' . $e->getMessage()
             ], 500);
         }
     }
+
+    protected function createDefaultCategories($user)
+    {
+        $defaultCategories = [
+            [
+                'nome' => 'Salário',
+                'descricao' => 'Rendimentos profissionais',
+                'subcategorias' => [
+                    ['nome' => 'Salário Fixo', 'descricao' => 'Salário mensal'],
+                    ['nome' => 'Bônus', 'descricao' => 'Bônus e gratificações']
+                ]
+            ],
+            // ... outras categorias
+        ];
+
+        // Criar categorias e subcategorias
+        foreach ($defaultCategories as $categoryData) {
+            $subcategorias = $categoryData['subcategorias'];
+            unset($categoryData['subcategorias']);
+
+            // Criar categoria
+            $category = Categoria::create([
+                'nome' => $categoryData['nome'],
+                'descricao' => $categoryData['descricao'],
+                'id_users' => $user->id
+            ]);
+
+            // Criar subcategorias
+            foreach ($subcategorias as $subcategoryData) {
+                SubCategoria::create([
+                    'nome' => $subcategoryData['nome'],
+                    'descricao' => $subcategoryData['descricao'],
+                    'id_categoria' => $category->id,
+                    'id_users' => $user->id // Adicionando referência ao usuário
+                ]);
+            }
+        }
+    }
+
+
 
     //Login e token users
 
