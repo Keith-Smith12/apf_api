@@ -25,7 +25,7 @@ class CategoriaController extends Controller
     {
         try {
             $validated = $request->validate([
-                'nome' => 'required|string|max:255|unique:categorias,nome,NULL,id,id_users,' . Auth::id(),
+                'nome' => 'required|string|max:25|unique:categorias,nome,NULL,id,id_users,' . Auth::id(),
                 'descricao' => 'nullable|string'
             ]);
             $categoria = Categoria::create([

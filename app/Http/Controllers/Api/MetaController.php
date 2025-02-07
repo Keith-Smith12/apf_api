@@ -13,12 +13,6 @@ use Illuminate\Support\Facades\Validator;
 class MetaController extends Controller
 {
     //
-
-    public function __construct()
-    {
-        $this->middleware('auth:sanctum');
-    }
-
     public function create(Request $request)
     {
         $userId = Auth::id();

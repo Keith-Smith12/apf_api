@@ -72,6 +72,15 @@ class AuthController extends Controller
                     ['nome' => 'Bônus', 'descricao' => 'Bônus e gratificações']
                 ]
             ],
+            [
+                'nome' => 'Alimentação',
+                'descricao' => 'Sexta básica e refeições',
+                'subcategorias' => [
+                    ['nome' => 'Legumes', 'descricao' => 'Verduras e legumes'],
+                    ['nome' => 'Carnes', 'descricao' => 'Carnes bovinas e suínas'],
+                    ['nome' => 'Frutas', 'descricao' => 'Frutas frescas']
+                ]
+            ],
             // ... outras categorias
         ];
 

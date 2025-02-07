@@ -13,10 +13,6 @@ use Illuminate\Support\Facades\Validator;
 class SaidaController extends Controller
 {
     //
-    public function __construct()
-    {
-        $this->middleware('auth:sanctum');
-    }
 
     public function create(Request $request)
     {
