@@ -35,8 +35,6 @@ class SubCategoriaController extends Controller
                 'id_categoria' => $request->id_categoria
             ]);
 
-            Cache::tags(['user_subcategorias_'.$userId])->flush();
-
             DB::commit();
             return response()->json($subCategoria, 201);
         } catch (\Exception $e) {
@@ -49,14 +47,11 @@ class SubCategoriaController extends Controller
     {
         $userId = Auth::id();
 
-        return Cache::tags(['user_subcategorias_'.$userId])
-            ->remember('user_subcategorias_'.$userId, now()->addHours(24), function () use ($userId) {
-                return SubCategoria::with('categoria.user')
-                    ->whereHas('categoria', function($query) use ($userId) {
-                        $query->where('id_users', $userId);
-                    })
-                    ->get();
-            });
+        return SubCategoria::with('categoria.user')
+            ->whereHas('categoria', function($query) use ($userId) {
+                $query->where('id_users', $userId);
+            })
+            ->get();
     }
 
     public function update($id, Request $request)
@@ -81,8 +76,6 @@ class SubCategoriaController extends Controller
         try {
             $subCategoria->update($request->only(['nome', 'descricao', 'id_categoria']));
 
-            Cache::tags(['user_subcategorias_'.$userId])->flush();
-
             DB::commit();
             return response()->json($subCategoria);
         } catch (\Exception $e) {
@@ -102,8 +95,6 @@ class SubCategoriaController extends Controller
         DB::beginTransaction();
         try {
             $subCategoria->delete();
-
-            Cache::tags(['user_subcategorias_'.$userId])->flush();
 
             DB::commit();
             return response()->json(['message' => 'Subcategoria removida']);
@@ -126,8 +117,6 @@ class SubCategoriaController extends Controller
         try {
             $subCategoria->forceDelete();
 
-            Cache::tags(['user_subcategorias_'.$userId])->flush();
-
             DB::commit();
             return response()->json(['message' => 'Subcategoria removida permanentemente']);
         } catch (\Exception $e) {
@@ -135,4 +124,5 @@ class SubCategoriaController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
 }

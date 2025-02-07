@@ -40,8 +40,6 @@ class MetaController extends Controller
                 'id_users' => $userId
             ]);
 
-            Cache::tags(['user_metas_'.$userId])->flush();
-
             DB::commit();
             return response()->json($meta, 201);
         } catch (\Exception $e) {
@@ -54,10 +52,7 @@ class MetaController extends Controller
     {
         $userId = Auth::id();
 
-        return Cache::tags(['user_metas_'.$userId])
-            ->remember('user_metas_'.$userId, now()->addHours(24), function () use ($userId) {
-                return Meta::where('id_users', $userId)->get();
-            });
+        return Meta::where('id_users', $userId)->get();
     }
 
     public function update($id, Request $request)
@@ -86,8 +81,6 @@ class MetaController extends Controller
                 'valor_actual', 'data_prazo'
             ]));
 
-            Cache::tags(['user_metas_'.$userId])->flush();
-
             DB::commit();
             return response()->json($meta);
         } catch (\Exception $e) {
@@ -106,8 +99,6 @@ class MetaController extends Controller
         DB::beginTransaction();
         try {
             $meta->delete();
-
-            Cache::tags(['user_metas_'.$userId])->flush();
 
             DB::commit();
             return response()->json(['message' => 'Meta removida']);
@@ -129,8 +120,6 @@ class MetaController extends Controller
         try {
             $meta->forceDelete();
 
-            Cache::tags(['user_metas_'.$userId])->flush();
-
             DB::commit();
             return response()->json(['message' => 'Meta removida permanentemente']);
         } catch (\Exception $e) {
@@ -138,4 +127,5 @@ class MetaController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
 }

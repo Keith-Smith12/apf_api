@@ -42,8 +42,6 @@ class SaidaController extends Controller
                 'id_subcategoria' => $request->id_subcategoria
             ]);
 
-            Cache::tags(['user_saidas_'.$userId])->flush();
-
             DB::commit();
             return response()->json($saida, 201);
         } catch (\Exception $e) {
@@ -56,14 +54,11 @@ class SaidaController extends Controller
     {
         $userId = Auth::id();
 
-        return Cache::tags(['user_saidas_'.$userId])
-            ->remember('user_saidas_'.$userId, now()->addHours(24), function () use ($userId) {
-                return Saida::with(['categoria', 'subCategoria'])
-                    ->whereHas('categoria', function($query) use ($userId) {
-                        $query->where('id_users', $userId);
-                    })
-                    ->get();
-            });
+        return Saida::with(['categoria', 'subCategoria'])
+            ->whereHas('categoria', function($query) use ($userId) {
+                $query->where('id_users', $userId);
+            })
+            ->get();
     }
 
     public function update($id, Request $request)
@@ -94,8 +89,6 @@ class SaidaController extends Controller
                 'data_saida', 'id_categoria', 'id_subcategoria'
             ]));
 
-            Cache::tags(['user_saidas_'.$userId])->flush();
-
             DB::commit();
             return response()->json($saida);
         } catch (\Exception $e) {
@@ -115,8 +108,6 @@ class SaidaController extends Controller
         DB::beginTransaction();
         try {
             $saida->delete();
-
-            Cache::tags(['user_saidas_'.$userId])->flush();
 
             DB::commit();
             return response()->json(['message' => 'Saída removida']);
@@ -138,8 +129,6 @@ class SaidaController extends Controller
         DB::beginTransaction();
         try {
             $saida->forceDelete();
-
-            Cache::tags(['user_saidas_'.$userId])->flush();
 
             DB::commit();
             return response()->json(['message' => 'Saída removida permanentemente']);

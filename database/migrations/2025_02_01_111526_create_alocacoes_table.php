@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('entrada_id')->constrained('entradas')->onDelete('cascade');
             $table->foreignId('categoria_id')->nullable()->constrained('categorias')->onDelete('cascade');
-            $table->foreignId('subcategoria_id')->nullable()->constrained('subcategorias')->onDelete('cascade');
+            $table->foreignId('subcategoria_id')->nullable()->constrained('sub_categorias')->onDelete('cascade');
             $table->foreignId('meta_id')->nullable()->constrained('metas')->onDelete('cascade');
             $table->decimal('valor', 10, 2); // Valor alocado
             $table->timestamps();
