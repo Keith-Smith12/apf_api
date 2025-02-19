@@ -23,6 +23,7 @@ class SaidaController extends Controller
             'descricao' => 'nullable|string',
             'valor' => 'required|numeric|min:0',
             'data_saida' => 'required|date',
+            'id_users' => 'required|exists:users,id',
             'id_categoria' => 'required|exists:categorias,id',
             'id_subcategoria' => 'nullable|exists:sub_categorias,id'
         ]);
@@ -38,6 +39,7 @@ class SaidaController extends Controller
                 'descricao' => $request->descricao,
                 'valor' => $request->valor,
                 'data_saida' => $request->data_saida,
+                'id_users' => $request->id_users,
                 'id_categoria' => $request->id_categoria,
                 'id_subcategoria' => $request->id_subcategoria
             ]);
@@ -55,7 +57,7 @@ class SaidaController extends Controller
         $userId = Auth::id();
 
         return Saida::with(['categoria', 'subCategoria'])
-            ->whereHas('categoria', function($query) use ($userId) {
+            ->whereHas('categoria', function ($query) use ($userId) {
                 $query->where('id_users', $userId);
             })
             ->get();
@@ -64,9 +66,9 @@ class SaidaController extends Controller
     public function update($id, Request $request)
     {
         $userId = Auth::id();
-        $saida = Saida::whereHas('categoria', function($query) use ($userId) {
-                $query->where('id_users', $userId);
-            })
+        $saida = Saida::whereHas('categoria', function ($query) use ($userId) {
+            $query->where('id_users', $userId);
+        })
             ->findOrFail($id);
 
         $validator = Validator::make($request->all(), [
@@ -74,6 +76,7 @@ class SaidaController extends Controller
             'descricao' => 'nullable|string',
             'valor' => 'sometimes|numeric|min:0',
             'data_saida' => 'sometimes|date',
+            'id_users' => 'sometimes|exists:users,id',
             'id_categoria' => 'sometimes|exists:categorias,id',
             'id_subcategoria' => 'nullable|exists:sub_categorias,id'
         ]);
@@ -85,8 +88,13 @@ class SaidaController extends Controller
         DB::beginTransaction();
         try {
             $saida->update($request->only([
-                'nome', 'descricao', 'valor',
-                'data_saida', 'id_categoria', 'id_subcategoria'
+                'nome',
+                'descricao',
+                'valor',
+                'data_saida',
+                'id_users',
+                'id_categoria',
+                'id_subcategoria'
             ]));
 
             DB::commit();
@@ -100,9 +108,9 @@ class SaidaController extends Controller
     public function delete($id)
     {
         $userId = Auth::id();
-        $saida = Saida::whereHas('categoria', function($query) use ($userId) {
-                $query->where('id_users', $userId);
-            })
+        $saida = Saida::whereHas('categoria', function ($query) use ($userId) {
+            $query->where('id_users', $userId);
+        })
             ->findOrFail($id);
 
         DB::beginTransaction();
@@ -121,7 +129,7 @@ class SaidaController extends Controller
     {
         $userId = Auth::id();
         $saida = Saida::withTrashed()
-            ->whereHas('categoria', function($query) use ($userId) {
+            ->whereHas('categoria', function ($query) use ($userId) {
                 $query->where('id_users', $userId);
             })
             ->findOrFail($id);

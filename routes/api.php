@@ -1,26 +1,18 @@
 <?php
 
-use App\Http\Controllers\Auth\AlertaController;
-use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-
-/*
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');*/
-
+Route::post('/register', 'App\Http\Controllers\Auth\AuthController@register');
+Route::post('/login', 'App\Http\Controllers\Auth\AuthController@login');
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::apiResource('alertas', AlertaController::class);
 
-    Route::post('/alocar-valor', 'App\Http\Controllers\Api\AlocacaoController@alocarValor');
+    Route::post('/logout', 'App\Http\Controllers\Auth\AuthController@logout');
+    Route::post('/alocacoes', 'App\Http\Controllers\Api\AlocacaoController@alocarValor');
+    Route::get('/alocacoes', 'App\Http\Controllers\Api\AlocacaoController@index');
 
     // Outras rotas protegidas aqui
     Route::prefix('categorias')->group(function () {
@@ -65,5 +57,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', 'App\Http\Controllers\Api\MetaController@update');
         Route::delete('/{id}', 'App\Http\Controllers\Api\MetaController@delete');
         Route::delete('purge/{id}', 'App\Http\Controllers\Api\MetaController@purge');
+    });
+
+
+    /** Rotas para o Relatório */
+    Route::prefix('relatorio')->group(function () {
+        Route::get('/distribuicao-gastos', 'App\Http\Controllers\Relatorio\RelatorioController@distribuicaoGastos');
+        Route::get('/metas-progresso', 'App\Http\Controllers\Relatorio\RelatorioController@metasProgresso');
+        Route::get('/fluxo-caixa', 'App\Http\Controllers\Relatorio\RelatorioController@fluxoCaixa');
+        Route::get('/resumo-mensal', 'App\Http\Controllers\Relatorio\RelatorioController@resumoMensal');
     });
 });

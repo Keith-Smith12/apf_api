@@ -15,6 +15,7 @@ class Saida extends Model
         'descricao',
         'valor',
         'data_saida',
+        'id_users',
         'id_categoria',
         'id_subcategoria',
     ];
@@ -22,6 +23,11 @@ class Saida extends Model
     protected $casts = [
         'data_saida' => 'date',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_users');
+    }
 
     public function categoria()
     {
