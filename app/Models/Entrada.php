@@ -17,7 +17,7 @@ class Entrada extends Model
         'data_entrada',
         'id_users',
         'id_categoria',
-        'id_subcategoria',
+        'id_meta',
     ];
 
     protected $casts = [
@@ -34,8 +34,8 @@ class Entrada extends Model
         return $this->belongsTo(Categoria::class, 'id_categoria');
     }
 
-    public function subCategoria()
+    public function meta()
     {
-        return $this->belongsTo(SubCategoria::class, 'id_subcategoria');
+        return $this->belongsTo(Meta::class, 'id_meta');
     }
 }

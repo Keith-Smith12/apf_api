@@ -18,6 +18,7 @@ class Saida extends Model
         'id_users',
         'id_categoria',
         'id_subcategoria',
+        'id_meta',
     ];
 
     protected $casts = [
@@ -37,5 +38,9 @@ class Saida extends Model
     public function subCategoria()
     {
         return $this->belongsTo(SubCategoria::class, 'id_subcategoria');
+    }
+    public function meta()
+    {
+        return $this->belongsTo(Meta::class, 'id_meta');
     }
 }
