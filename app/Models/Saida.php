@@ -3,16 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Saida extends Model
 {
     //
+    use SoftDeletes;
 
     protected $fillable = [
         'nome',
         'descricao',
         'valor',
         'data_saida',
+        'id_users',
         'id_categoria',
         'id_subcategoria',
     ];
@@ -20,6 +23,11 @@ class Saida extends Model
     protected $casts = [
         'data_saida' => 'date',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_users');
+    }
 
     public function categoria()
     {

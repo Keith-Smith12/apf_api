@@ -17,9 +17,12 @@ return new class extends Migration
             $table->string('descricao');
             $table->float('valor');
             $table->date('data_saida');
+            $table->foreignId('id_users')->constrained('users');
             $table->foreignId('id_categoria')->constrained('categorias');
             $table->foreignId('id_subcategoria')->nullable()->constrained('sub_categorias');
+            $table->foreignId('id_meta')->nullable()->constrained('metas');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

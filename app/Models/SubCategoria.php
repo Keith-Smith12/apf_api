@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SubCategoria extends Model
 {
     //
+    use SoftDeletes;
 
     protected $fillable = [
         'nome',
         'descricao',
+        'id_users',
         'id_categoria',
     ];
 
@@ -28,4 +31,14 @@ class SubCategoria extends Model
     {
         return $this->hasMany(Entrada::class, 'id_subcategoria');
     }
+
+     // New method to create subcategories
+     public static function createForCategoria($nome, $descricao, $categoriaId)
+     {
+         return static::create([
+             'nome' => $nome,
+             'descricao' => $descricao,
+             'id_categoria' => $categoriaId
+         ]);
+     }
 }
