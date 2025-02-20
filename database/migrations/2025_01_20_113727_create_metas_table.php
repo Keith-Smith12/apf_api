@@ -19,6 +19,9 @@ return new class extends Migration
             $table->float('valor_actual');
             $table->date('data_prazo');
             $table->foreignId('id_users')->constrained('users')->onDelete('cascade');
+            $table->enum('status', ['pendente', 'em_andamento', 'concluida'])
+            ->default('pendente')
+            ->after('valor_actual');
             $table->timestamps();
             $table->softDeletes();
         });
