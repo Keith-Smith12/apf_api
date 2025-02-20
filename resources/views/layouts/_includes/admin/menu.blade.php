@@ -28,7 +28,7 @@
             <li class="nav-item dropdown">
                 <li class="nav-item">
                     <a class="nav-link pl-3" href="{{ route('admin.usuarios.index') }}">
-                         <i class="fe fe-file-text fe-16"></i>
+                         <i class="fe fe-file-users fe-16"></i>
                          <span class="ml-1 item-text">Utilizadores</span>
                     </a>
                 </li>

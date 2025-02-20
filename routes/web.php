@@ -7,8 +7,7 @@ Route::get('/', function () {
 });
 
 
-
-/* START Rotas de Usuários */
+/* START Rotas de Usuários
 Route::prefix('usuarios')->group(function () {
     Route::get('index', ['as' => 'admin.usuarios.index', 'uses' => 'Admin\UserController@index']);
     Route::get('create', ['as' => 'admin.usuarios.create', 'uses' => 'Admin\UserController@create']);
@@ -22,6 +21,30 @@ Route::prefix('usuarios')->group(function () {
     Route::get('deletados', ['as' => 'admin.usuarios.deletados', 'uses' => 'Admin\UserController@deletedUsers']); // Listar usuários eliminados
 });
 
+*/
+
+Route::prefix('usuarios')->name('admin.usuarios.')->group(function () {
+    // Listar todos os usuários (GET)
+    Route::get('/', 'App\Http\Controllers\Admin\UserController@index')->name('index');
+
+    // Criar um novo usuário (GET)
+    Route::get('create', 'App\Http\Controllers\Admin\UserController@create')->name('create');
+
+    // Armazenar um novo usuário (POST)
+    Route::post('store', 'App\Http\Controllers\Admin\UserController@store')->name('store');
+
+    // Atualizar um usuário existente (PUT)
+    Route::put('/{id}', 'App\Http\Controllers\Admin\UserController@update')->name('update');
+
+    // Deletar um usuário (soft delete) (DELETE)
+    Route::delete('/{id}', 'App\Http\Controllers\Admin\UserController@destroy')->name('destroy');
+
+    // Forçar a exclusão de um usuário (force delete) (DELETE)
+    Route::delete('purge/{id}', 'App\Http\Controllers\Admin\UserController@forceDelete')->name('forceDelete');
+
+    // Restaurar um usuário deletado (soft delete) (POST)
+    Route::post('restore/{id}', 'App\Http\Controllers\Admin\UserController@restore')->name('restore');
+});
 
 
 Route::middleware([
