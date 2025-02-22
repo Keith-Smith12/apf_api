@@ -18,8 +18,9 @@ return new class extends Migration
             $table->float('valor');
             $table->date('data_entrada');
             $table->foreignId('id_users')->constrained('users');
-            $table->foreignId('id_categoria')->constrained('categorias');
-            $table->foreignId('id_meta')->constrained('metas');
+            $table->foreignId('id_categoria')->nullable()->constrained('categorias');
+            $table->foreignId('id_meta')->nullable()->constrained('metas');
+
             $table->timestamps();
             $table->softDeletes();
         });

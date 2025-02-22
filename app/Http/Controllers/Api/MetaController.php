@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Meta;
+use App\Models\Entrada;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -48,6 +49,7 @@ class MetaController extends Controller
         }
     }
 
+
     public function index()
     {
         $userId = Auth::id();
@@ -55,6 +57,58 @@ class MetaController extends Controller
         return Meta::where('id_users', $userId)->get();
     }
 
+    public function updateValorActual($id)
+    {
+        $userId = Auth::id();
+        $meta = Meta::where('id', $id)
+            ->where('id_users', $userId)
+            ->firstOrFail();
+
+        DB::beginTransaction();
+        try {
+
+            $totalEntradas = Entrada::where('id_users', $userId)
+                ->where('created_at', '<=', $meta->data_prazo)
+                ->sum('valor');
+
+
+            $meta->update([
+                'valor_actual' => $totalEntradas
+            ]);
+
+            DB::commit();
+            return response()->json([
+                'meta' => $meta,
+                'total_entradas' => $totalEntradas
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getProgress($id)
+    {
+        $userId = Auth::id();
+        $meta = Meta::where('id', $id)
+            ->where('id_users', $userId)
+            ->firstOrFail();
+
+        $totalEntradas = Entrada::where('id_users', $userId)
+            ->where('created_at', '<=', $meta->data_prazo)
+            ->sum('valor');
+
+        $percentageComplete = ($totalEntradas / $meta->valor) * 100;
+
+        return response()->json([
+            'meta' => $meta,
+            'total_entradas' => $totalEntradas,
+            'percentage_complete' => min(100, round($percentageComplete, 2)),
+            'remaining_value' => max(0, $meta->valor - $totalEntradas)
+        ]);
+    }
+
+    
     public function update($id, Request $request)
     {
         $userId = Auth::id();
@@ -67,7 +121,8 @@ class MetaController extends Controller
             'descricao' => 'nullable|string',
             'valor' => 'sometimes|numeric|min:0',
             'valor_actual' => 'sometimes|numeric|min:0',
-            'data_prazo' => 'sometimes|date|after:today'
+            'data_prazo' => 'sometimes|date|after:today',
+            'update_from_entries' => 'sometimes|boolean'
         ]);
 
         if ($validator->fails()) {
@@ -76,6 +131,14 @@ class MetaController extends Controller
 
         DB::beginTransaction();
         try {
+            if ($request->update_from_entries) {
+                $totalEntradas = Entrada::where('id_users', $userId)
+                    ->where('created_at', '<=', $meta->data_prazo)
+                    ->sum('valor');
+
+                $request->merge(['valor_actual' => $totalEntradas]);
+            }
+
             $meta->update($request->only([
                 'nome', 'descricao', 'valor',
                 'valor_actual', 'data_prazo'

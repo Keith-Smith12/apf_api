@@ -24,8 +24,8 @@ class EntradaController extends Controller
         'descricao' => 'nullable|string',
         'valor' => 'required|numeric|min:0',
         'data_entrada' => 'required|date',
-        'id_categoria' => 'required|exists:categorias,id',
-        'id_subcategoria' => 'nullable|exists:sub_categorias,id'
+        'id_categoria' => 'nullable|exists:categorias,id',
+        'id_meta' => 'nullable|exists:metas,id'
     ]);
 
     if ($validator->fails()) {
@@ -41,7 +41,7 @@ class EntradaController extends Controller
             'data_entrada' => $request->data_entrada,
             'id_users' => $userId,
             'id_categoria' => $request->id_categoria,
-            'id_subcategoria' => $request->id_subcategoria
+            'id_meta' => $request->id_meta
         ]);
 
         DB::commit();
@@ -56,7 +56,7 @@ public function index()
 {
     $userId = Auth::id();
 
-    return Entrada::with(['user', 'categoria', 'subCategoria'])
+    return Entrada::with(['user', 'categoria', 'meta'])
         ->where('id_users', $userId)
         ->get();
 }
@@ -74,7 +74,7 @@ public function update($id, Request $request)
         'valor' => 'sometimes|numeric|min:0',
         'data_entrada' => 'sometimes|date',
         'id_categoria' => 'sometimes|exists:categorias,id',
-        'id_subcategoria' => 'nullable|exists:sub_categorias,id'
+        'id_meta' => 'nullable|exists:metas,id'
     ]);
 
     if ($validator->fails()) {
@@ -85,7 +85,7 @@ public function update($id, Request $request)
     try {
         $entrada->update($request->only([
             'nome', 'descricao', 'valor',
-            'data_entrada', 'id_categoria', 'id_subcategoria'
+            'data_entrada', 'id_categoria', 'id_meta'
         ]));
 
         DB::commit();
