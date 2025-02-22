@@ -11,7 +11,6 @@ class Categoria extends Model
     use SoftDeletes;
 
     protected $fillable = [
-
         'valor',
         'nome',
         'descricao',
