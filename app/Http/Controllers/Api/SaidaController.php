@@ -3,146 +3,166 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Categoria;
+use App\Models\Meta;
 use App\Models\Saida;
+use App\Models\SubCategoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Exception;
 
 class SaidaController extends Controller
 {
-    //
-
-    public function create(Request $request)
+    public function index()
     {
-        $userId = Auth::id();
-
-        $validator = Validator::make($request->all(), [
-            'nome' => 'required|string|max:255',
-            'descricao' => 'nullable|string',
-            'valor' => 'required|numeric|min:0',
-            'data_saida' => 'required|date',
-            'id_users' => 'required|exists:users,id',
-            'id_categoria' => 'required|exists:categorias,id',
-            'id_subcategoria' => 'nullable|exists:sub_categorias,id'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
-
-        DB::beginTransaction();
         try {
-            $saida = Saida::create([
+            $userId = Auth::id();
+            $Saida = Saida::where('id_users', $userId)->get();
+
+            return response()->json($Saida, 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao listar categorias', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // 🔹 Criar Categoria
+    public function store(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'nome' => 'required|min:3|max:30',
+                'descricao' => 'required|min:5',
+                'valor' => 'required|numeric',
+                'data_saida'=>'required',
+                'id_categoria'=>'nullable',
+                'id_meta'=>'nullable',
+                'id_subcategoria'=>'nullable',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 400);
+            }
+            // Verifica se apenas um dos IDs foi informado
+            if ((empty($request->id_categoria) && empty($request->id_meta) && empty($request->id_subcategoria)) ||
+            (!empty($request->id_categoria) && !empty($request->id_meta)) && !empty($request->id_subcategoria)) {
+            return response()->json(['error' => 'Você deve fornecer apenas um dos IDs: id_categoria, id_subcategoria id_meta'], 400);
+            }
+
+            $Saida = Saida::create([
                 'nome' => $request->nome,
                 'descricao' => $request->descricao,
                 'valor' => $request->valor,
-                'data_saida' => $request->data_saida,
-                'id_users' => $request->id_users,
-                'id_categoria' => $request->id_categoria,
-                'id_subcategoria' => $request->id_subcategoria
+                'data_saida'=>$request->data_saida,
+                'id_categoria'=>$request->id_categoria,
+                'id_meta'=>$request->id_meta,
+                'id_subcategoria'=>$request->id_subcategoria,
+                'id_users' => Auth::id(),
             ]);
-
-            DB::commit();
-            return response()->json($saida, 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            $valorTotal = $request->valor;
+            // Atualizar o valor da categoria
+            if($request-> id_categoria){
+            $categoria = Categoria::findOrFail($request->id_categoria);
+            $categoria->valor -= $valorTotal; // Subtrair o valor da categoria
+            $categoria->save(); // Salvar as alterações
+            }
+             // Atualizar o valor da metas
+            elseif($request->id_meta){
+            $valorTotalmeta = $request->valor;
+            $Metas = Meta::findOrFail($request->id_meta);
+            $Metas->valor_actual -= $valorTotalmeta; // Adicione o valor à meta
+            $Metas->save(); // Salve as alterações
+            }
+             // Atualizar o valor da Subcategoria
+            elseif($request->id_subcategoria){
+            $valorTotalsubcategoria = $request-> valor;
+            $Subcategoria = SubCategoria::findOrFail($request->id_subcategoria);
+            $Subcategoria-> valor -= $valorTotalsubcategoria;
+            $Subcategoria->save();
+            }
+            return response()->json($Saida, 201);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao criar Saida', 'message' => $e->getMessage()], 500);
         }
     }
-
-    public function index()
+    // 🔹 Atualizar Saida
+    public function update(Request $request, $id)
     {
-        $userId = Auth::id();
-
-        return Saida::with(['categoria', 'subCategoria'])
-            ->whereHas('categoria', function ($query) use ($userId) {
-                $query->where('id_users', $userId);
-            })
-            ->get();
-    }
-
-    public function update($id, Request $request)
-    {
-        $userId = Auth::id();
-        $saida = Saida::whereHas('categoria', function ($query) use ($userId) {
-            $query->where('id_users', $userId);
-        })
-            ->findOrFail($id);
-
-        $validator = Validator::make($request->all(), [
-            'nome' => 'sometimes|string|max:255',
-            'descricao' => 'nullable|string',
-            'valor' => 'sometimes|numeric|min:0',
-            'data_saida' => 'sometimes|date',
-            'id_users' => 'sometimes|exists:users,id',
-            'id_categoria' => 'sometimes|exists:categorias,id',
-            'id_subcategoria' => 'nullable|exists:sub_categorias,id'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
-
-        DB::beginTransaction();
         try {
-            $saida->update($request->only([
-                'nome',
-                'descricao',
-                'valor',
-                'data_saida',
-                'id_users',
-                'id_categoria',
-                'id_subcategoria'
-            ]));
+            $Saida = Saida::where('id_users', Auth::id())->find($id);
+            if (!$Saida) {
+                return response()->json(['error' => 'Saida não encontrada'], 404);
+            }
 
-            DB::commit();
-            return response()->json($saida);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            $validator = Validator::make($request->all(), [
+                'nome' => 'required|min:3|max:30',
+                'descricao' => 'required|min:5',
+                'valor' => 'required|numeric',
+                'data_saida'=>'required',
+                'id_categoria'=>'nullable',
+                'id_meta'=>'nullable',
+                'id_subcategoria'=>'nullable',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 400);
+            }
+            // Armazenar o valor anterior para calcular a diferença
+            $valorAnterior = $Saida->valor;
+            $valorNovo = $request->valor;
+            // Calcular a diferença
+            $diferenca = $valorNovo - $valorAnterior;
+            $Saida->update($request->all());
+            // Atualizar o valor da categoria
+            if ($Saida->id_categoria) {
+                $categoria = Categoria::findOrFail($Saida->id_categoria);
+                $categoria->valor -= $diferenca; // Subtrair a diferença do valor da categoria
+                $categoria->save(); // Salvar as alterações
+            }
+
+            // Atualizar o valor da meta
+            if ($Saida->id_meta) {
+                $metas = Meta::findOrFail($Saida->id_meta);
+                $metas->valor_actual -= $diferenca; // Subtrair a diferença do valor da meta
+                $metas->save(); // Salvar as alterações
+            }
+            // Atualizar o valor da Subcategoria
+            if ($Saida->id_subcategoria) {
+                $Subcategoria = SubCategoria::findOrFail($Saida->id_subcategoria);
+                $Subcategoria->valor -= $diferenca; // Subtrair a diferença do valor da meta
+                $Subcategoria->save(); // Salvar as alterações
+            }
+            return response()->json($Saida, 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao atualizar Saida', 'message' => $e->getMessage()], 500);
         }
     }
-
-    public function delete($id)
+    // 🔹 Mostrar uma Saida específica
+    public function show($id)
     {
-        $userId = Auth::id();
-        $saida = Saida::whereHas('categoria', function ($query) use ($userId) {
-            $query->where('id_users', $userId);
-        })
-            ->findOrFail($id);
-
-        DB::beginTransaction();
         try {
-            $saida->delete();
-
-            DB::commit();
-            return response()->json(['message' => 'Saída removida']);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            $Saida = Saida::where('id_users', Auth::id())->find($id);
+            if (!$Saida) {
+                return response()->json(['error' => 'Saida não encontrada'], 404);
+            }
+            return response()->json($Saida, 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao buscar Saida', 'message' => $e->getMessage()], 500);
         }
     }
-
-    public function purge($id)
+    // 🔹 Deletar Categoria
+    public function destroy($id)
     {
-        $userId = Auth::id();
-        $saida = Saida::withTrashed()
-            ->whereHas('categoria', function ($query) use ($userId) {
-                $query->where('id_users', $userId);
-            })
-            ->findOrFail($id);
-
-        DB::beginTransaction();
         try {
-            $saida->forceDelete();
+            $Saida = Saida::where('id_users', Auth::id())->find($id);
+            if (!$Saida) {
+                return response()->json(['error' => 'Saida não encontrada'], 404);
+            }
 
-            DB::commit();
-            return response()->json(['message' => 'Saída removida permanentemente']);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            $Saida->delete();
+
+            return response()->json(['message' => 'Saida deletada com sucesso'], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao deletar Saida', 'message' => $e->getMessage()], 500);
         }
     }
 }

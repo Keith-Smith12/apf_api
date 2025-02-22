@@ -20,5 +20,8 @@ class DatabaseSeeder extends Seeder
             'sobrenome' => 'Administrador',
             'email' => 'admin@gmail.com',
         ]);
+        $this->call(CategoriaSeeder::class);
+        $this->call(Sub_categoriaSeeder::class);
+        $this->call(SaidaSeeder::class);
     }
 }

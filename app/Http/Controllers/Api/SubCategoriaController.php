@@ -5,124 +5,109 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SubCategoria;
+use Exception;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class SubCategoriaController extends Controller
 {
-    //
-    public function create(Request $request)
-    {
-        $userId = Auth::id();
-
-        $validator = Validator::make($request->all(), [
-            'nome' => 'required|string|max:255',
-            'descricao' => 'nullable|string',
-            'id_categoria' => 'required|exists:categorias,id'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
-
-        DB::beginTransaction();
-        try {
-            $subCategoria = SubCategoria::create([
-                'nome' => $request->nome,
-                'descricao' => $request->descricao,
-                'id_categoria' => $request->id_categoria
-            ]);
-
-            DB::commit();
-            return response()->json($subCategoria, 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
     public function index()
     {
-        $userId = Auth::id();
-
-        return SubCategoria::with('categoria.user')
-            ->whereHas('categoria', function($query) use ($userId) {
-                $query->where('id_users', $userId);
-            })
-            ->get();
-    }
-
-    public function update($id, Request $request)
-    {
-        $userId = Auth::id();
-        $subCategoria = SubCategoria::whereHas('categoria', function($query) use ($userId) {
-                $query->where('id_users', $userId);
-            })
-            ->findOrFail($id);
-
-        $validator = Validator::make($request->all(), [
-            'nome' => 'sometimes|string|max:255',
-            'descricao' => 'nullable|string',
-            'id_categoria' => 'sometimes|exists:categorias,id'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
-
-        DB::beginTransaction();
         try {
-            $subCategoria->update($request->only(['nome', 'descricao', 'id_categoria']));
+            $userId = Auth::id();
+            $SubCategoria = SubCategoria::where('id_users', $userId)->get();
 
-            DB::commit();
-            return response()->json($subCategoria);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json($SubCategoria, 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao listar Subcategorias', 'message' => $e->getMessage()], 500);
         }
     }
 
-    public function delete($id)
+    // 🔹 Criar Subcategoria
+    public function store(Request $request)
     {
-        $userId = Auth::id();
-        $subCategoria = SubCategoria::whereHas('categoria', function($query) use ($userId) {
-                $query->where('id_users', $userId);
-            })
-            ->findOrFail($id);
-
-        DB::beginTransaction();
         try {
-            $subCategoria->delete();
+            $validator = Validator::make($request->all(), [
+                'nome' => 'required|min:3|max:30',
+                'descricao' => 'required|min:5',
+                'valor' => 'required|numeric',
+                'id_categoria'=>'resquired',
+                'id_users'=>'required',
+            ]);
 
-            DB::commit();
-            return response()->json(['message' => 'Subcategoria removida']);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 400);
+            }
+
+            $SubCategoria = SubCategoria::create([
+                'nome' => $request->nome,
+                'descricao' => $request->descricao,
+                'valor' => $request->valor,
+                'id_categoria'=>$request->id_categoria,
+                'id_users' => Auth::id(),
+            ]);
+
+            return response()->json($SubCategoria, 201);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao criar Subcategoria', 'message' => $e->getMessage()], 500);
         }
     }
 
-    public function purge($id)
+    // 🔹 Atualizar Subcategoria
+    public function update(Request $request, $id)
     {
-        $userId = Auth::id();
-        $subCategoria = SubCategoria::withTrashed()
-            ->whereHas('categoria', function($query) use ($userId) {
-                $query->where('id_users', $userId);
-            })
-            ->findOrFail($id);
-
-        DB::beginTransaction();
         try {
-            $subCategoria->forceDelete();
+            $SubCategoria = SubCategoria::where('id_users', Auth::id())->find($id);
+            if (!$SubCategoria) {
+                return response()->json(['error' => 'Subcategoria não encontrada'], 404);
+            }
 
-            DB::commit();
-            return response()->json(['message' => 'Subcategoria removida permanentemente']);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            $validator = Validator::make($request->all(), [
+                'nome' => 'required|min:3|max:30',
+                'descricao' => 'required|min:5',
+                'valor' => 'required|numeric',
+                'id_categoria'=>'required',
+                'id_users'=>'required'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 400);
+            }
+
+            $SubCategoria->update($request->all());
+
+            return response()->json($SubCategoria, 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao atualizar Subcategoria', 'message' => $e->getMessage()], 500);
         }
     }
+    // 🔹 Mostrar uma Subcategoria específica
+    public function show($id)
+    {
+        try {
+            $SubCategoria = SubCategoria::where('id_users', Auth::id())->find($id);
+            if (!$SubCategoria) {
+                return response()->json(['error' => 'Subcategoria não encontrada'], 404);
+            }
 
+            return response()->json($SubCategoria, 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao buscar Subcategoria', 'message' => $e->getMessage()], 500);
+        }
+    }
+    // 🔹 Deletar Categoria
+    public function destroy($id)
+    {
+        try {
+            $SubCategoria = SubCategoria::where('id_users', Auth::id())->find($id);
+            if (!$SubCategoria) {
+                return response()->json(['error' => 'Categoria não encontrada'], 404);
+            }
+            $SubCategoria->delete();
+            
+            return response()->json(['message' => 'Subcategoria deletada com sucesso'], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Erro ao deletar Subcategoria', 'message' => $e->getMessage()], 500);
+        }
+    }
 }
