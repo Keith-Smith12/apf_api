@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\ResetPasswordNotification;
 
 class AuthController extends Controller
 {
@@ -18,7 +21,7 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-      //  dd($request->all());
+        //  dd($request->all());
         DB::beginTransaction();
         try {
             // Validar entrada
@@ -112,7 +115,8 @@ class AuthController extends Controller
 
     //Login e token users
 
-    public function login(Request $request){
+    public function login(Request $request)
+    {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required'
@@ -152,5 +156,43 @@ class AuthController extends Controller
             'status' => true,
             'message' => 'Sessão Terminada'
         ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        // Validar entrada
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        // Tentar redefinir a senha
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->password = Hash::make($password);
+                $user->save();
+            }
+        );
+
+        return $status === Password::PASSWORD_RESET
+            ? response()->json(['status' => true, 'message' => 'Senha redefinida com sucesso.'])
+            : response()->json(['status' => false, 'message' => 'Erro ao redefinir a senha.'], 500);
+    }
+
+
+
+    public function forgotPassword(Request $request)
+    {
+        // Validar entrada
+        $request->validate(['email' => 'required|email']);
+
+        // Enviar o link de redefinição de senha
+        $status = Password::sendResetLink($request->only('email'));
+
+        return $status === Password::RESET_LINK_SENT
+            ? response()->json(['status' => true, 'message' => 'Link de redefinição de senha enviado com sucesso.'])
+            : response()->json(['status' => false, 'message' => 'Erro ao enviar link de redefinição de senha.'], 500);
     }
 }

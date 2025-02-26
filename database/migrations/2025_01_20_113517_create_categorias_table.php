@@ -11,15 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('categorias', function (Blueprint $table) {
-            $table->id();
-            $table->float('valor')->default(0);
-            $table->string('nome');
-            $table->string('descricao')->nullable();
-            $table->foreignId('id_users')->constrained('users')->onDelete('cascade');
-            $table->timestamps();
-            $table->softDeletes();
-        });
+         
     }
 
     /**

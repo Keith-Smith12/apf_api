@@ -2,9 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('admin.index');
-});
+
 
 
 /* START Rotas de Usuários
@@ -22,6 +20,8 @@ Route::prefix('usuarios')->group(function () {
 });
 
 */
+
+Route::get('/', 'App\Http\Controllers\Admin\DashboardController@index')->name('admin.index');
 
 Route::prefix('usuarios')->name('admin.usuarios.')->group(function () {
     // Listar todos os usuários (GET)

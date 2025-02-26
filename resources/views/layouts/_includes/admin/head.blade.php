@@ -4,7 +4,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <link rel="icon" href="{{ asset('favicon.ico') }}">
-    <title>Sistema de Gestão de Empresa - @yield('titulo')</title>
+    <title>Sistema de Gestão - @yield('titulo')</title>
     <!-- Simple bar CSS -->
     <link rel="stylesheet" href="{{ asset('painel/css/simplebar.css') }}">
     <!-- Fonts CSS -->
