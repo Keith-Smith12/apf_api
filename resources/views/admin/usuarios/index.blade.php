@@ -5,96 +5,47 @@
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-12">
-                <div class="row">
-                    <div class="col-md-12 my-4">
+                <h2 class="mb-2 page-title">Lista de Usuários</h2>
+                <button class="btn btn-info mb-3" data-toggle="modal" data-target="#usuarioModal" onclick="abrirModalCriacao()">
+                    Criar Usuário
+                </button>
+                <div class="row my-4">
+                    <div class="col-md-12">
                         <div class="card shadow">
                             <div class="card-body">
-                                <div class="toolbar">
-                                    <form class="form">
-                                        <div class="form-row">
-                                            <div class="form-group col-auto mr-auto">
-                                                <label class="my-1 mr-2 sr-only"
-                                                    for="inlineFormCustomSelectPref1">Show</label>
-                                                <select class="custom-select mr-sm-2" id="inlineFormCustomSelectPref1">
-                                                    <option value="">...</option>
-                                                    <option value="1">12</option>
-                                                    <option value="2" selected>32</option>
-                                                    <option value="3">64</option>
-                                                    <option value="3">128</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group col-auto">
-                                                <label for="search" class="sr-only">Search</label>
-                                                <input type="text" class="form-control" id="search1" value=""
-                                                    placeholder="Search">
-                                            </div>
-
-                                            <div class="col-auto">
-                                                {{-- @can('user-create') --}}
-                                                <a href="#" class="btn botao" data-toggle="modal"
-                                                    data-target="#ModalCreate" style="color:white">
-                                                    {{ __('Adicionar') }}
-                                                </a>
-                                                {{-- @endcan --}}
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-
-                                <!-- Tabela -->
-                                <table class="table table-borderless table-hover">
-                                    <thead class="thead-dark">
+                                <table class="table datatables" id="dataTable-1">
+                                    <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>NOME</th>
-                                            <th>Opções</th>
+                                            <th>#</th>
+                                            <th>Nome</th>
+                                            <th>Email</th>
+                                            <th>Nível</th>
+                                            <th>Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($usuarios as $usuario)
+                                        @foreach($usuarios as $usuario)
                                             <tr>
                                                 <td>{{ $usuario->id }}</td>
                                                 <td>{{ $usuario->name }} {{ $usuario->sobrenome }}</td>
-                                                <td>{{ $usuario->email }} </td>
-                                                {{-- Ajustado para garantir que exibe nome e sobrenome corretamente --}}
+                                                <td>{{ $usuario->email }}</td>
+                                                <td>{{ $usuario->nivel }}</td>
                                                 <td>
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-sm dropdown-toggle more-horizontal"
-                                                            type="button" data-toggle="dropdown" aria-haspopup="true"
-                                                            aria-expanded="false">
-                                                            <span class="text-muted sr-only">Action</span>
+                                                    <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#usuarioModal" onclick="abrirModalEdicao({{ $usuario }})">
+                                                        Editar
+                                                    </button>
+                                                    <form action="{{ route('admin.usuarios.destroy', $usuario->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este usuário?');">
+                                                            Excluir
                                                         </button>
-                                                        <div class="dropdown-menu dropdown-menu-right">
-                                                            <a class="dropdown-item" href="#" data-toggle="modal"
-                                                                data-target="#ModalEdit{{ $usuario->id }}">{{ __('Editar') }}</a>
-
-                                                                <a class="dropdown-item"
-                                                                    href="{{ route('admin.usuarios.restore', $usuario->id) }}">{{ __('Restaurar') }}</a>
-                                                                <a class="dropdown-item text-danger"
-                                                                    href="{{ route('admin.usuarios.forceDelete', $usuario->id) }}">{{ __('Excluir Permanentemente') }}</a>
-
-                                                                <a class="dropdown-item"
-                                                                    href="{{ route('admin.usuarios.destroy', $usuario->id) }}">{{ __('Remover') }}</a>
-                                                         
-                                                        </div>
-                                                    </div>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
-
                                 </table>
-
-                                <nav aria-label="Table Paging" class="mb-0 text-muted">
-                                    <ul class="pagination justify-content-center mb-0">
-                                        <li class="page-item"><a class="page-link" href="#">Anterior</a></li>
-                                        <li class="page-item"><a class="page-link" href="#">1</a></li>
-                                        <li class="page-item active"><a class="page-link" href="#">2</a></li>
-                                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                        <li class="page-item"><a class="page-link" href="#">Próximo</a></li>
-                                    </ul>
-                                </nav>
-
                             </div>
                         </div>
                     </div>
@@ -103,56 +54,72 @@
         </div>
     </div>
 
-    {{-- Modal de criação --}}
-    <div class="modal fade text-left" id="ModalCreate" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+    <!-- Modal de Criação/Edição -->
+    <div class="modal fade" id="usuarioModal" tabindex="-1" role="dialog" aria-labelledby="usuarioModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">{{ __('Adicionar Usuário') }}</h4>
+                    <h5 class="modal-title" id="usuarioModalLabel">Gerenciar Usuário</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    @include('admin.usuarios.create.index')
+                    <form id="usuarioForm" method="POST">
+                        @csrf
+                        <div id="methodField"></div> <!-- Para adicionar @method('PUT') dinamicamente -->
+
+                        <div class="form-group">
+                            <label for="name">Nome</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sobrenome">Sobrenome</label>
+                            <input type="text" class="form-control" id="sobrenome" name="sobrenome" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nivel">Nível</label>
+                            <select class="form-control" id="nivel" name="nivel">
+                                <option value="admin">Admin</option>
+                                <option value="usuario">Usuário</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        $(document).ready(function() {
-            $('#ModalCreate').on('show.bs.modal', function(event) {
-                $.get('/usuario/create', function(response) {
-                    $('#ModalCreate .modal-body').html(response);
-                });
-            });
-        });
+        function abrirModalCriacao() {
+            document.getElementById('usuarioModalLabel').innerText = 'Criar Usuário';
+            document.getElementById('usuarioForm').reset();
+            document.getElementById('usuarioForm').action = "{{ route('admin.usuarios.store') }}";
+
+            // Método padrão POST para criação
+            document.getElementById('methodField').innerHTML = '';
+        }
+
+        function abrirModalEdicao(usuario) {
+            document.getElementById('usuarioModalLabel').innerText = 'Editar Usuário';
+            document.getElementById('usuarioForm').action = "{{ route('admin.usuarios.update', '') }}/" + usuario.id;
+
+            // Adicionando o método PUT para edição
+            document.getElementById('methodField').innerHTML = '@method("PUT")';
+
+            document.getElementById('name').value = usuario.name;
+            document.getElementById('sobrenome').value = usuario.sobrenome;
+            document.getElementById('email').value = usuario.email;
+            document.getElementById('nivel').value = usuario.nivel;
+        }
     </script>
-
-    {{-- Mensagens de Sucesso e Erro --}}
-    @if (session('usuario.destroy.success'))
-        <script>
-            Swal.fire('Usuário removido com sucesso!', '', 'success');
-        </script>
-    @endif
-
-    @if (session('usuario.destroy.error'))
-        <script>
-            Swal.fire('Erro ao remover usuário!', '', 'error');
-        </script>
-    @endif
-
-    @if (session('usuario.purge.success'))
-        <script>
-            Swal.fire('Usuário purgado com sucesso!', '', 'success');
-        </script>
-    @endif
-
-    @if (session('usuario.purge.error'))
-        <script>
-            Swal.fire('Erro ao purgar usuário!', '', 'error');
-        </script>
-    @endif
-
 @endsection

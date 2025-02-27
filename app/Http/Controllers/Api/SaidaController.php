@@ -29,6 +29,8 @@ class SaidaController extends Controller
     // 🔹 Criar Categoria
     public function store(Request $request)
     {
+
+        dd($request->all());
         try {
             $validator = Validator::make($request->all(), [
                 'nome' => 'required|min:3|max:30',

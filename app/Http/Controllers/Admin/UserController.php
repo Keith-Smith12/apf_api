@@ -12,33 +12,29 @@ use Illuminate\Validation\Rule;
 class UserController extends Controller
 {
 
-    public function __construct()
-    {
-        $this->logger = new Logger();
-    }
 
-    public function loggerData($mensagem)
-    {
-        $this->logger->Log('info', $mensagem);
-    }
+
 
     public function index()
     {
         $usuarios = User::withTrashed()->get();
-        $this->loggerData("Listou Usuários");
+
+
         return view('admin.usuarios.index', compact('usuarios'));
     }
 
     public function create()
     {
+
         return view('admin.usuarios.create.index');
     }
 
     public function store(Request $request)
     {
+
         $request->validate([
-            'name' => 'required|string|max:255',
-            'sobrenome' => 'required|string|max:255',
+            'name' => 'required|string|max:25',
+            'sobrenome' => 'required|string|max:30',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'nivel' => 'required|integer|min:1|max:2',
@@ -53,9 +49,10 @@ class UserController extends Controller
                 'nivel' => $request->nivel,
             ]);
 
-            $this->loggerData("Cadastrou o usuário {$usuario->name} ({$usuario->email})");
+            dd($usuario);
             return redirect()->back()->with('usuario.create.success', 1);
         } catch (\Throwable $th) {
+            throw $th;
             return redirect()->back()->with('usuario.create.error', 1);
         }
     }
@@ -89,7 +86,7 @@ class UserController extends Controller
                 $usuario->update(['password' => Hash::make($request->password)]);
             }
 
-            $this->loggerData("Editou o usuário {$usuario->id} ({$usuario->email})");
+
             return redirect()->back()->with('usuario.update.success', 1);
         } catch (\Throwable $th) {
             return redirect()->back()->with('usuario.update.error', 1);
@@ -101,7 +98,7 @@ class UserController extends Controller
         try {
             $usuario = User::findOrFail($id);
             $usuario->delete();
-            $this->loggerData("Removeu o usuário {$usuario->id} ({$usuario->email})");
+
             return redirect()->back()->with('usuario.destroy.success', 1);
         } catch (\Throwable $th) {
             return redirect()->back()->with('usuario.destroy.error', 1);
@@ -110,7 +107,7 @@ class UserController extends Controller
 
     public function deletedUsers()
     {
-        $this->loggerData("Listou Usuários Eliminados");
+
         $usuarios = User::onlyTrashed()->get();
         return view('admin.usuarios.eliminados.index', compact('usuarios'));
     }
@@ -121,7 +118,7 @@ class UserController extends Controller
         try {
             $usuario = User::onlyTrashed()->findOrFail($id);
             $usuario->restore();
-            $this->loggerData("Restaurou o usuário {$usuario->id} ({$usuario->email})");
+
             return redirect()->back()->with('usuario.restore.success', 1);
         } catch (\Throwable $th) {
             return redirect()->back()->with('usuario.restore.error', 1);
@@ -133,7 +130,7 @@ class UserController extends Controller
         try {
             $usuario = User::onlyTrashed()->findOrFail($id);
             $usuario->forceDelete();
-            $this->loggerData("Excluiu permanentemente o usuário {$usuario->id} ({$usuario->email})");
+
             return redirect()->back()->with('usuario.purge.success', 1);
         } catch (\Throwable $th) {
             return redirect()->back()->with('usuario.purge.error', 1);
